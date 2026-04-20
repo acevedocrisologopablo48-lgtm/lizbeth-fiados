@@ -213,3 +213,16 @@ async function obtenerTodoSemanal() {
     if (error) return { ok: false, error: error.message };
     return { ok: true, registros: data || [] };
 }
+// ── Obtener TODO el historial (para Excel completo) ───────────────────────
+async function obtenerTodoHistorial() {
+    const db = getClient();
+
+    const { data, error } = await db
+        .from("ventas")
+        .select("fecha, nombre, total_diario")
+        .order("fecha", { ascending: false })
+        .order("nombre");
+
+    if (error) return { ok: false, error: error.message };
+    return { ok: true, registros: data || [] };
+}

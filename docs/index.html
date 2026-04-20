@@ -50,6 +50,7 @@
     <header class="header">
         <h1>🍱 Fiados Lizbeth</h1>
         <p class="date" id="headerDate"></p>
+        <p class="cloud-badge" id="cloudBadge">☁️ Datos en la nube — siempre disponibles</p>
     </header>
 
     <!-- CONTENIDO -->
@@ -76,6 +77,16 @@
         <div class="tabs">
             <button class="tab-btn active" id="tabDia"      onclick="switchTab('dia')">📅 Hoy</button>
             <button class="tab-btn"         id="tabSemanal" onclick="switchTab('semanal')">📊 Semana</button>
+        </div>
+
+        <!-- Botón exportar Excel siempre visible -->
+        <div class="export-section">
+            <button class="export-btn" id="btnExportSemana" onclick="onExportarSemana()">
+                📥 Exportar Semana a Excel
+            </button>
+            <button class="export-btn export-btn-alt" id="btnExportTodo" onclick="onExportarHistorial()">
+                📋 Exportar Todo el Historial
+            </button>
         </div>
 
         <!-- Lista de registros -->

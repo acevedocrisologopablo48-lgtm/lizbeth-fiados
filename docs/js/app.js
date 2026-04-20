@@ -403,3 +403,10 @@ function showToast(msg, type = "info") {
 function onExportar() {
     exportarExcel();
 }
+function onExportarSemana() {
+    exportarExcel();
+}
+
+function onExportarHistorial() {
+    exportarHistorial();
+}
