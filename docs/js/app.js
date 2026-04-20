@@ -98,7 +98,7 @@ function submitManual() {
 
 // ── Procesar texto (voz o manual) ─────────────────────────────────────────────
 function processText(texto) {
-    const { nombre, monto } = extraerDatos(texto);
+    const { nombre, monto, montos } = extraerDatos(texto);
 
     if (!nombre && !monto) {
         showToast('No entendí. Intenta: "Carlos 3.50"', "error");
@@ -106,7 +106,7 @@ function processText(texto) {
     }
 
     if (!nombre) {
-        openSheet("ask-nombre", { monto, callback: (n) => showConfirm(n, monto) });
+        openSheet("ask-nombre", { monto, callback: (n) => showConfirm(n, monto, montos) });
         return;
     }
     if (!monto) {
@@ -114,15 +114,25 @@ function processText(texto) {
         return;
     }
 
-    showConfirm(nombre, monto);
+    showConfirm(nombre, monto, montos);
 }
 
 // ── Confirmar registro ────────────────────────────────────────────────────────
-function showConfirm(nombre, monto) {
+function showConfirm(nombre, monto, montos) {
     State.pendingNombre = nombre;
     State.pendingMonto = monto;
     document.getElementById("sheetTitle").textContent = "¿Registrar esta venta?";
-    document.getElementById("sheetDetail").textContent = `${nombre}  →  S/ ${monto.toFixed(2)}`;
+
+    let detailText;
+    if (montos && montos.length >= 2) {
+        // Mostrar desglose: S/ 3.50 + S/ 2.00 = S/ 5.50
+        const partes = montos.map(m => `S/ ${m.toFixed(2)}`).join(" + ");
+        detailText = `${nombre}\n${partes} = S/ ${monto.toFixed(2)}`;
+    } else {
+        detailText = `${nombre}  →  S/ ${monto.toFixed(2)}`;
+    }
+
+    document.getElementById("sheetDetail").textContent = detailText;
     document.getElementById("sheetDetail").classList.remove("hidden");
     document.getElementById("sheetInput").classList.add("hidden");
     document.getElementById("sheetHint").classList.add("hidden");

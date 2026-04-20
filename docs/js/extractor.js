@@ -95,7 +95,7 @@ function textToNumber(words) {
     return result > 0 ? Math.round(result * 100) / 100 : null;
 }
 
-function extraerDatos(texto) {
+function _extraerDatosSingle(texto) {
     texto = texto.trim();
     if (!texto) return { nombre: null, monto: null };
 
@@ -177,10 +177,43 @@ function extraerDatos(texto) {
             .trim()
             .replace(/[,;.!?]+$/, "")
             .trim();
-        // Capitalizar cada palabra
-        nombre = nombre.replace(/\b\w/g, c => c.toUpperCase());
+        // Capitalizar primera letra de cada palabra (sin romper tildes)
+        nombre = nombre.split(" ").map(w => w ? w[0].toUpperCase() + w.slice(1) : w).join(" ");
         if (nombre === "") nombre = null;
     }
 
     return { nombre, monto };
+}
+
+// ── Entrada pública: soporta "Carlos 3.50 más 2" ─────────────────────────────
+function extraerDatos(texto) {
+    texto = texto.trim();
+    if (!texto) return { nombre: null, monto: null };
+
+    // Normalizar "mas" suelto → "más"
+    const textoNorm = texto.replace(/\bmas\b/gi, "más");
+
+    // Si contiene "más", procesar cada parte y sumar montos
+    if (/más/i.test(textoNorm)) {
+        const partes = textoNorm.split(/\s*más\s*/i).map(p => p.trim()).filter(Boolean);
+        const montos = [];
+        let nombre = null;
+
+        for (const parte of partes) {
+            const res = _extraerDatosSingle(parte);
+            if (res.monto !== null) montos.push(Math.round(res.monto * 100) / 100);
+            if (res.nombre !== null && nombre === null) nombre = res.nombre;
+        }
+
+        if (montos.length >= 2) {
+            const total = Math.round(montos.reduce((s, m) => s + m, 0) * 100) / 100;
+            return { nombre, monto: total, montos };
+        }
+        // Si solo un monto válido, caer al flujo normal
+        if (montos.length === 1 && nombre !== null) {
+            return { nombre, monto: montos[0] };
+        }
+    }
+
+    return _extraerDatosSingle(texto);
 }

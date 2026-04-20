@@ -476,7 +476,7 @@ body {
     margin-bottom: 6px;
 }
 .sheet-detail {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 800;
     color: var(--yellow);
     text-align: center;
@@ -485,6 +485,8 @@ body {
     border-radius: var(--radius);
     margin: 12px 0;
     border: 1px solid var(--border);
+    white-space: pre-line;
+    line-height: 1.5;
 }
 .sheet-input {
     width: 100%;
