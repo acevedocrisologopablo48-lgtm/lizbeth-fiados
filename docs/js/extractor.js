@@ -102,7 +102,7 @@ function extraerDatos(texto) {
     let monto = null;
     let textoLimpio = texto;
 
-    // Fase A: número decimal directo (3.50, 3,50)
+    // Fase A: número decimal directo con punto o coma (3.50, 3,50)
     const matchDecimal = texto.match(/(\d+)[.,](\d{1,2})/);
     if (matchDecimal) {
         const decimal = matchDecimal[2].padEnd(2, "0");
@@ -110,11 +110,34 @@ function extraerDatos(texto) {
         textoLimpio = texto.replace(matchDecimal[0], " ");
     }
 
+    // Fase A1b: patrón "X 50", "X 25", "X 75" etc. — dígito espacio dos dígitos
+    // Ej: "3 50" → 3.50 (cuando el ASR separa el entero de los centavos)
+    if (monto === null) {
+        const matchSpaced = textoLimpio.match(/\b(\d{1,3})\s+(\d{2})\b/);
+        if (matchSpaced) {
+            const intPart = parseInt(matchSpaced[1], 10);
+            const decPart = parseInt(matchSpaced[2], 10);
+            if (decPart < 100) {
+                monto = intPart + decPart / 100;
+                textoLimpio = textoLimpio.replace(matchSpaced[0], " ");
+            }
+        }
+    }
+
     // Fase A2: número entero solo (Pedro 2 soles)
+    // Si el número >= 100 y termina en 50/25/75, probablemente sea decimal hablado
+    // Ej: "150" = "uno cincuenta" = 1.50, "250" = "dos cincuenta" = 2.50
     if (monto === null) {
         const matchInt = textoLimpio.match(/\b(\d+)\b/);
         if (matchInt) {
-            monto = parseFloat(matchInt[1]);
+            let val = parseInt(matchInt[1], 10);
+            if (val >= 100 && val < 10000) {
+                const cents = val % 100;
+                if (cents === 50 || cents === 25 || cents === 75) {
+                    val = Math.floor(val / 100) + cents / 100;
+                }
+            }
+            monto = val;
             textoLimpio = textoLimpio.replace(matchInt[0], " ");
         }
     }
