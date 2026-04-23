@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#7c3aed">
+    <title>Fiado — Lizbeth</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f0f1a;
+            color: #f1f5f9;
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ── Header ─────────────────── */
+        .header {
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            padding: 18px 20px;
+            text-align: center;
+            position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 4px 20px rgba(124,58,237,0.3);
+        }
+        .header h1 { font-size: 18px; font-weight: 700; }
+        .header .date { font-size: 13px; color: #e0d4f7; margin-top: 2px; }
+
+        /* ── Container ──────────────── */
+        .container { padding: 16px; max-width: 500px; margin: 0 auto; }
+
+        /* ── Botón de voz ───────────── */
+        .voice-btn {
+            width: 100%;
+            padding: 20px;
+            border: none;
+            border-radius: 16px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .voice-btn.idle {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            box-shadow: 0 4px 15px rgba(239,68,68,0.4);
+        }
+        .voice-btn.idle:active {
+            transform: scale(0.97);
+            box-shadow: 0 2px 8px rgba(239,68,68,0.3);
+        }
+        .voice-btn.recording {
+            background: linear-gradient(135deg, #b91c1c, #991b1b);
+            color: white;
+            animation: pulse 1.2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
+            50% { box-shadow: 0 0 0 14px rgba(239,68,68,0); }
+        }
+        .voice-btn:disabled { opacity: 0.5; }
+
+        .mic-icon { font-size: 24px; }
+
+        /* ── Input manual ───────────── */
+        .manual-section { margin-top: 14px; }
+        .manual-section label {
+            font-size: 12px;
+            color: #94a3b8;
+            display: block;
+            margin-bottom: 6px;
+        }
+        .manual-row {
+            display: flex;
+            gap: 8px;
+        }
+        .manual-row input {
+            flex: 1;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #3b3b54;
+            background: #1e1e2e;
+            color: #f1f5f9;
+            font-size: 15px;
+            outline: none;
+        }
+        .manual-row input:focus { border-color: #7c3aed; }
+        .manual-row button {
+            padding: 14px 18px;
+            border-radius: 12px;
+            border: none;
+            background: #22c55e;
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .manual-row button:active { background: #16a34a; }
+
+        /* ── Status ─────────────────── */
+        .status {
+            margin-top: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            text-align: center;
+            display: none;
+            font-weight: 500;
+        }
+        .status.success { display: block; background: #052e16; color: #4ade80; border: 1px solid #166534; }
+        .status.error   { display: block; background: #2a0a0a; color: #fca5a5; border: 1px solid #7f1d1d; }
+        .status.info    { display: block; background: #1e1b4b; color: #c4b5fd; border: 1px solid #4c1d95; }
+
+        /* ── Tabs ───────────────────── */
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin-top: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #3b3b54;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            background: #1e1e2e;
+            color: #94a3b8;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: #7c3aed;
+            color: white;
+        }
+
+        /* ── Tabla ──────────────────── */
+        .table-wrap { margin-top: 12px; }
+        .entry {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            background: #1e1e2e;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            border: 1px solid #2a2a3d;
+            transition: border-color 0.2s;
+        }
+        .entry.selected {
+            border-color: #7c3aed;
+            background: #1e1b4b;
+        }
+        .entry .name {
+            flex: 1;
+            font-size: 15px;
+            font-weight: 600;
+        }
+        .entry .amount {
+            font-size: 15px;
+            font-weight: 700;
+            color: #fbbf24;
+        }
+        .entry .weekly {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-left: 12px;
+            min-width: 70px;
+            text-align: right;
+        }
+        .empty-msg {
+            text-align: center;
+            color: #64748b;
+            padding: 30px;
+            font-size: 14px;
+        }
+
+        /* ── Total ──────────────────── */
+        .total-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 14px 16px;
+            background: linear-gradient(135deg, #1e1b4b, #2a2a3d);
+            border-radius: 12px;
+            margin-top: 4px;
+            border: 1px solid #3b3b54;
+        }
+        .total-bar .label { font-size: 14px; font-weight: 600; }
+        .total-bar .value { font-size: 16px; font-weight: 800; color: #fbbf24; }
+
+        /* ── Botones de acción ─────── */
+        .actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+            flex-wrap: wrap;
+        }
+        .action-btn {
+            flex: 1;
+            min-width: 80px;
+            padding: 12px 10px;
+            border: none;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+            transition: all 0.15s;
+        }
+        .action-btn:active { transform: scale(0.96); }
+        .btn-edit   { background: #3b82f6; }
+        .btn-delete { background: #ef4444; }
+        .btn-export { background: #8b5cf6; }
+
+        /* ── Confirm overlay ───────── */
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .overlay.show { display: flex; }
+        .dialog {
+            background: #1e1e2e;
+            border-radius: 20px;
+            padding: 24px;
+            width: 100%;
+            max-width: 360px;
+            border: 1px solid #3b3b54;
+        }
+        .dialog h3 { font-size: 16px; margin-bottom: 16px; text-align: center; }
+        .dialog p { font-size: 14px; color: #94a3b8; text-align: center; margin-bottom: 16px; }
+        .dialog input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #3b3b54;
+            background: #0f0f1a;
+            color: #f1f5f9;
+            font-size: 16px;
+            outline: none;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .dialog-btns { display: flex; gap: 10px; }
+        .dialog-btns button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .dialog-btns .cancel-btn { background: #374151; color: #94a3b8; }
+        .dialog-btns .confirm-btn { background: #7c3aed; color: white; }
+        .dialog-btns .delete-btn { background: #ef4444; color: white; }
+
+        /* ── Confirm venta overlay ─── */
+        .confirm-detail { font-size: 22px !important; color: #f1f5f9 !important; font-weight: 700; }
+        .edit-fields { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+        .edit-fields label { font-size: 11px; color: #94a3b8; margin-bottom: 2px; }
+        .edit-fields input { margin-bottom: 0; }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <h1>🍽️ SISTEMA DE FIADO — LIZBETH</h1>
+    <div class="date">📅 {{ fecha }}</div>
+</div>
+
+<div class="container">
+
+    <!-- Botón de voz -->
+    <button class="voice-btn idle" id="voiceBtn" onclick="toggleVoice()">
+        <span class="mic-icon">🎙️</span>
+        <span id="voiceText">DICTAR VENTA</span>
+    </button>
+
+    <!-- Entrada manual -->
+    <div class="manual-section">
+        <label>O escribe aquí (ej: Carlos 3.50)</label>
+        <div class="manual-row">
+            <input type="text" id="manualInput" placeholder="Nombre y monto..."
+                   enterkeyhint="send" autocomplete="off">
+            <button onclick="submitManual()">Registrar</button>
+        </div>
+    </div>
+
+    <!-- Status -->
+    <div class="status" id="status"></div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab-btn active" id="tabDia" onclick="switchTab('dia')">📋 Hoy</button>
+        <button class="tab-btn" id="tabSemanal" onclick="switchTab('semanal')">📊 Semanal</button>
+    </div>
+
+    <!-- Lista -->
+    <div class="table-wrap" id="tableWrap"></div>
+
+    <!-- Total -->
+    <div class="total-bar">
+        <span class="label" id="totalLabel">Total del día</span>
+        <span class="value" id="totalValue">S/ 0.00</span>
+    </div>
+
+    <!-- Acciones -->
+    <div class="actions">
+        <button class="action-btn btn-edit" onclick="onCorregir()">✏️ Corregir</button>
+        <button class="action-btn btn-delete" onclick="onBorrar()">🗑️ Borrar</button>
+        <button class="action-btn btn-export" onclick="onExportar()">📥 Excel</button>
+    </div>
+
+</div>
+
+<!-- Overlay: Confirmar venta -->
+<div class="overlay" id="confirmOverlay">
+    <div class="dialog">
+        <h3>✅ Confirmar venta</h3>
+        <p style="font-size:13px;margin-bottom:12px;">Revisa o edita los datos antes de registrar:</p>
+        <div class="edit-fields">
+            <div>
+                <label>Nombre</label>
+                <input type="text" id="confirmNombre" placeholder="Nombre" autocomplete="off" style="text-transform:capitalize">
+            </div>
+            <div>
+                <label>Monto (S/)</label>
+                <input type="number" id="confirmMonto" step="0.01" min="0" placeholder="0.00" inputmode="decimal">
+            </div>
+        </div>
+        <div class="dialog-btns">
+            <button class="cancel-btn" onclick="closeConfirm()">Cancelar</button>
+            <button class="confirm-btn" onclick="doConfirmRegister()">✅ Registrar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Overlay: Editar nombre y monto -->
+<div class="overlay" id="editOverlay">
+    <div class="dialog">
+        <h3>✏️ Editar registro</h3>
+        <div class="edit-fields">
+            <div>
+                <label>Nombre</label>
+                <input type="text" id="editNombreNuevo" placeholder="Nombre" autocomplete="off">
+            </div>
+            <div>
+                <label>Nuevo monto (S/)</label>
+                <input type="number" id="editMonto" step="0.01" min="0" placeholder="Nuevo monto"
+                       inputmode="decimal">
+            </div>
+        </div>
+        <div class="dialog-btns">
+            <button class="cancel-btn" onclick="closeEdit()">Cancelar</button>
+            <button class="confirm-btn" onclick="doEditar()">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Overlay: Confirmar borrar -->
+<div class="overlay" id="deleteOverlay">
+    <div class="dialog">
+        <h3>🗑️ ¿Eliminar registro?</h3>
+        <p id="deleteName"></p>
+        <div class="dialog-btns">
+            <button class="cancel-btn" onclick="closeDelete()">Cancelar</button>
+            <button class="delete-btn" onclick="doBorrar()">Eliminar</button>
+        </div>
+    </div>
+</div>
+
+<!-- Overlay: pedir dato faltante -->
+<div class="overlay" id="askOverlay">
+    <div class="dialog">
+        <h3 id="askTitle"></h3>
+        <p id="askDetail"></p>
+        <input type="text" id="askInput" placeholder="" autocomplete="off">
+        <div class="dialog-btns">
+            <button class="cancel-btn" onclick="closeAsk()">Cancelar</button>
+            <button class="confirm-btn" onclick="doAsk()">Aceptar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── Estado ──────────────────────────────────────────
+let currentTab = 'dia';
+let selectedName = null;
+let pendingName = null;
+let pendingMonto = null;
+let askCallback = null;
+
+// ── Web Speech API ──────────────────────────────────
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let isRecording = false;
+
+if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.lang = 'es-PE';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onresult = (e) => {
+        const texto = e.results[0][0].transcript;
+        stopVoiceUI();
+        setStatus(`Escuché: "${texto}"`, 'info');
+        processText(texto);
+    };
+
+    recognition.onerror = (e) => {
+        stopVoiceUI();
+        if (e.error === 'no-speech') {
+            setStatus('No se detectó voz. Intenta de nuevo.', 'error');
+        } else if (e.error === 'not-allowed') {
+            setStatus('Permiso de micrófono denegado. Habilítalo en tu navegador.', 'error');
+        } else {
+            setStatus(`Error de voz: ${e.error}`, 'error');
+        }
+    };
+
+    recognition.onend = () => { stopVoiceUI(); };
+}
+
+function toggleVoice() {
+    if (!recognition) {
+        setStatus('Tu navegador no soporta voz. Usa Chrome.', 'error');
+        return;
+    }
+    if (isRecording) {
+        recognition.stop();
+        stopVoiceUI();
+    } else {
+        isRecording = true;
+        const btn = document.getElementById('voiceBtn');
+        btn.classList.remove('idle');
+        btn.classList.add('recording');
+        document.getElementById('voiceText').textContent = 'GRABANDO... habla ahora';
+        setStatus('Escuchando...', 'info');
+        recognition.start();
+    }
+}
+
+function stopVoiceUI() {
+    isRecording = false;
+    const btn = document.getElementById('voiceBtn');
+    btn.classList.remove('recording');
+    btn.classList.add('idle');
+    document.getElementById('voiceText').textContent = 'DICTAR VENTA';
+}
+
+// ── Procesar texto (voz o manual) ────────────────────
+async function processText(texto) {
+    try {
+        const res = await fetch('/api/extraer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ texto })
+        });
+        const data = await res.json();
+
+        let nombre = data.nombre;
+        let monto = data.monto;
+
+        if (!nombre && !monto) {
+            setStatus('No pude entender. Intenta: "Carlos 3.50"', 'error');
+            return;
+        }
+
+        if (!nombre) {
+            askUser('¿Para quién es?', `Monto: S/ ${monto.toFixed(2)}`, 'Nombre', (val) => {
+                showConfirm(val.trim(), monto);
+            });
+            return;
+        }
+
+        if (!monto) {
+            askUser('¿Cuánto fue?', `Nombre: ${nombre}`, 'Monto (ej: 3.50)', (val) => {
+                const m = parseFloat(val.replace(',', '.'));
+                if (isNaN(m) || m <= 0) { setStatus('Monto inválido.', 'error'); return; }
+                showConfirm(nombre, m);
+            });
+            return;
+        }
+
+        showConfirm(nombre, monto);
+    } catch (err) {
+        setStatus('Error de conexión.', 'error');
+    }
+}
+
+// ── Confirmar registro ──────────────────────────────
+function showConfirm(nombre, monto) {
+    pendingName = nombre;
+    pendingMonto = monto;
+    document.getElementById('confirmNombre').value = nombre;
+    document.getElementById('confirmMonto').value = monto.toFixed(2);
+    document.getElementById('confirmOverlay').classList.add('show');
+    setTimeout(() => document.getElementById('confirmNombre').focus(), 100);
+}
+
+function closeConfirm() {
+    document.getElementById('confirmOverlay').classList.remove('show');
+    pendingName = null;
+    pendingMonto = null;
+}
+
+async function doConfirmRegister() {
+    const nombre = document.getElementById('confirmNombre').value.trim();
+    const montoRaw = document.getElementById('confirmMonto').value.replace(',', '.');
+    const monto = parseFloat(montoRaw);
+    if (!nombre) { setStatus('Falta el nombre.', 'error'); return; }
+    if (isNaN(monto) || monto <= 0) { setStatus('Monto inválido.', 'error'); return; }
+    closeConfirm();
+    try {
+        const res = await fetch('/api/registrar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre, monto })
+        });
+        const data = await res.json();
+        if (!data.ok) { setStatus(data.error, 'error'); return; }
+
+        if (data.accion === 'INSERT') {
+            setStatus(`✅ ${data.nombre} registrado: S/ ${monto.toFixed(2)}`, 'success');
+        } else {
+            setStatus(`✅ ${data.nombre} actualizado: S/ ${data.monto_anterior.toFixed(2)} → S/ ${data.nuevo_total.toFixed(2)}`, 'success');
+        }
+        loadTable();
+    } catch {
+        setStatus('Error de conexión.', 'error');
+    }
+}
+
+// ── Input manual ────────────────────────────────────
+function submitManual() {
+    const input = document.getElementById('manualInput');
+    const texto = input.value.trim();
+    if (!texto) return;
+    processText(texto);
+    input.value = '';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('manualInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') submitManual();
+    });
+    loadTable();
+});
+
+// ── Tabs ────────────────────────────────────────────
+function switchTab(tab) {
+    currentTab = tab;
+    document.getElementById('tabDia').classList.toggle('active', tab === 'dia');
+    document.getElementById('tabSemanal').classList.toggle('active', tab === 'semanal');
+    selectedName = null;
+    loadTable();
+}
+
+// ── Cargar tabla ────────────────────────────────────
+async function loadTable() {
+    const wrap = document.getElementById('tableWrap');
+    try {
+        const url = currentTab === 'dia' ? '/api/resumen/dia' : '/api/resumen/semanal';
+        const res = await fetch(url);
+        const data = await res.json();
+
+        const registros = data.registros;
+        const total = data.total;
+
+        if (registros.length === 0) {
+            wrap.innerHTML = '<div class="empty-msg">No hay registros.</div>';
+        } else {
+            let html = '';
+            for (const r of registros) {
+                const nombre = r.nombre;
+                const sel = selectedName === nombre ? ' selected' : '';
+                if (currentTab === 'dia') {
+                    html += `<div class="entry${sel}" onclick="selectEntry('${nombre.replace(/'/g, "\\'")}')">
+                        <span class="name">${nombre}</span>
+                        <span class="amount">S/ ${r.total_diario.toFixed(2)}</span>
+                        <span class="weekly">sem: ${r.total_semanal.toFixed(2)}</span>
+                    </div>`;
+                } else {
+                    html += `<div class="entry${sel}" onclick="selectEntry('${nombre.replace(/'/g, "\\'")}')">
+                        <span class="name">${nombre}</span>
+                        <span class="amount">S/ ${r.total_semanal.toFixed(2)}</span>
+                    </div>`;
+                }
+            }
+            wrap.innerHTML = html;
+        }
+
+        const label = currentTab === 'dia' ? 'Total del día' : 'Total semanal';
+        document.getElementById('totalLabel').textContent = label;
+        document.getElementById('totalValue').textContent = `S/ ${total.toFixed(2)}`;
+
+    } catch {
+        wrap.innerHTML = '<div class="empty-msg">Error al cargar datos.</div>';
+    }
+}
+
+function selectEntry(nombre) {
+    selectedName = selectedName === nombre ? null : nombre;
+    loadTable();
+}
+
+// ── Editar (nombre + monto) ──────────────────────────
+function onCorregir() {
+    if (!selectedName) {
+        setStatus('Toca un nombre en la lista primero.', 'error');
+        return;
+    }
+    document.getElementById('editNombreNuevo').value = selectedName;
+    document.getElementById('editMonto').value = '';
+    document.getElementById('editOverlay').classList.add('show');
+    setTimeout(() => document.getElementById('editNombreNuevo').focus(), 100);
+}
+
+function closeEdit() {
+    document.getElementById('editOverlay').classList.remove('show');
+}
+
+async function doEditar() {
+    const nombreNuevo = document.getElementById('editNombreNuevo').value.trim();
+    const nuevoMonto = parseFloat(document.getElementById('editMonto').value.replace(',', '.'));
+    if (!nombreNuevo) { setStatus('Falta el nombre.', 'error'); return; }
+    if (isNaN(nuevoMonto) || nuevoMonto < 0) { setStatus('Monto inválido.', 'error'); return; }
+    closeEdit();
+    try {
+        const res = await fetch('/api/editar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre_antiguo: selectedName, nombre_nuevo: nombreNuevo, nuevo_monto: nuevoMonto })
+        });
+        const data = await res.json();
+        if (!data.ok) { setStatus(data.error, 'error'); return; }
+        setStatus(`✅ Editado: ${data.nombre_nuevo}  S/ ${data.nuevo_monto.toFixed(2)}`, 'success');
+        selectedName = null;
+        loadTable();
+    } catch {
+        setStatus('Error de conexión.', 'error');
+    }
+}
+
+// ── Borrar ──────────────────────────────────────────
+function onBorrar() {
+    if (!selectedName) {
+        setStatus('Toca un nombre en la lista primero.', 'error');
+        return;
+    }
+    document.getElementById('deleteName').textContent = `${selectedName}`;
+    document.getElementById('deleteOverlay').classList.add('show');
+}
+
+function closeDelete() {
+    document.getElementById('deleteOverlay').classList.remove('show');
+}
+
+async function doBorrar() {
+    closeDelete();
+    try {
+        const res = await fetch('/api/borrar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre: selectedName })
+        });
+        const data = await res.json();
+        if (!data.ok) { setStatus(data.error, 'error'); return; }
+        setStatus(`🗑️ ${data.nombre} eliminado.`, 'success');
+        selectedName = null;
+        loadTable();
+    } catch {
+        setStatus('Error de conexión.', 'error');
+    }
+}
+
+// ── Exportar Excel ──────────────────────────────────
+function onExportar() {
+    window.location.href = '/api/exportar';
+    setStatus('📥 Descargando Excel...', 'info');
+}
+
+// ── Pedir dato faltante ─────────────────────────────
+function askUser(title, detail, placeholder, callback) {
+    document.getElementById('askTitle').textContent = title;
+    document.getElementById('askDetail').textContent = detail;
+    document.getElementById('askInput').placeholder = placeholder;
+    document.getElementById('askInput').value = '';
+    askCallback = callback;
+    document.getElementById('askOverlay').classList.add('show');
+    setTimeout(() => document.getElementById('askInput').focus(), 100);
+}
+
+function closeAsk() {
+    document.getElementById('askOverlay').classList.remove('show');
+    askCallback = null;
+}
+
+function doAsk() {
+    const val = document.getElementById('askInput').value.trim();
+    if (!val) return;
+    const cb = askCallback;
+    closeAsk();
+    if (cb) cb(val);
+}
+
+// ── Status ──────────────────────────────────────────
+function setStatus(msg, type) {
+    const el = document.getElementById('status');
+    el.textContent = msg;
+    el.className = 'status ' + type;
+    if (type === 'success' || type === 'info') {
+        setTimeout(() => { el.className = 'status'; }, 5000);
+    }
+}
+</script>
+
+</body>
+</html>

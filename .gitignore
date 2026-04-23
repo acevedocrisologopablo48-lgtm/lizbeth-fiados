@@ -20,5 +20,6 @@ desktop.ini
 # Logs
 *.log
 
-# Legacy local files
-fiado_control.xlsx
+# Local data files (no subir a git)
+*.db
+*.xlsx
