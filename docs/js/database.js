@@ -226,3 +226,43 @@ async function obtenerTodoHistorial() {
     if (error) return { ok: false, error: error.message };
     return { ok: true, registros: data || [] };
 }
+
+// ── Editar nombre y/o monto del día actual ────────────────────────────────────
+async function editarEntrada(nombreAntiguo, nombreNuevo, nuevoMonto) {
+    const db = getClient();
+    const hoy = hoyISO();
+
+    const { data: existentes, error: errSelect } = await db
+        .from("ventas")
+        .select("id, total_diario")
+        .eq("fecha", hoy)
+        .ilike("nombre", nombreAntiguo.trim())
+        .limit(1);
+
+    if (errSelect) return { ok: false, error: errSelect.message };
+    if (!existentes || existentes.length === 0)
+        return { ok: false, error: `No se encontró a "${nombreAntiguo}" hoy.` };
+
+    const fila = existentes[0];
+    const anterior = parseFloat(fila.total_diario);
+
+    const { error: errUpdate } = await db
+        .from("ventas")
+        .update({
+            nombre: nombreNuevo.trim(),
+            total_diario: nuevoMonto,
+            updated_at: new Date().toISOString(),
+        })
+        .eq("id", fila.id);
+
+    if (errUpdate) return { ok: false, error: errUpdate.message };
+
+    return {
+        ok: true,
+        accion: "EDITAR",
+        nombreAnterior: nombreAntiguo.trim(),
+        nombreNuevo: nombreNuevo.trim(),
+        montoAnterior: anterior,
+        nuevoMonto,
+    };
+}

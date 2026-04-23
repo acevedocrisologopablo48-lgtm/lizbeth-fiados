@@ -126,7 +126,17 @@
     <div class="sheet-handle"></div>
     <h3 class="sheet-title" id="sheetTitle">¿Registrar esta venta?</h3>
     <div class="sheet-detail" id="sheetDetail"></div>
-    <input class="sheet-input hidden" id="sheetInput" type="text">
+    <div class="sheet-fields hidden" id="sheetFields">
+        <div class="sheet-field-group">
+            <label class="sheet-field-label" id="sheetLabel1">Nombre</label>
+            <input class="sheet-input" id="sheetInput" type="text" autocomplete="off">
+        </div>
+        <div class="sheet-field-group">
+            <label class="sheet-field-label" id="sheetLabel2">Monto (S/)</label>
+            <input class="sheet-input" id="sheetInput2" type="number" step="0.01" min="0" inputmode="decimal">
+        </div>
+    </div>
+    <input class="sheet-input hidden" id="sheetInputSingle" type="text">
     <p class="sheet-hint hidden" id="sheetHint"></p>
     <div class="sheet-btns">
         <button class="btn-cancel"  onclick="closeOverlay()">Cancelar</button>

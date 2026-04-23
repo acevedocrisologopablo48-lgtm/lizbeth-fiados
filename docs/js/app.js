@@ -121,54 +121,59 @@ function processText(texto) {
 function showConfirm(nombre, monto, montos) {
     State.pendingNombre = nombre;
     State.pendingMonto = monto;
-    document.getElementById("sheetTitle").textContent = "¿Registrar esta venta?";
 
-    let detailText;
+    let titleText = "✅ Confirmar venta";
     if (montos && montos.length >= 2) {
-        // Mostrar desglose: S/ 3.50 + S/ 2.00 = S/ 5.50
         const partes = montos.map(m => `S/ ${m.toFixed(2)}`).join(" + ");
-        detailText = `${nombre}\n${partes} = S/ ${monto.toFixed(2)}`;
-    } else {
-        detailText = `${nombre}  →  S/ ${monto.toFixed(2)}`;
+        titleText = `✅ Confirmar (${partes})`;
     }
+    document.getElementById("sheetTitle").textContent = titleText;
+    document.getElementById("sheetDetail").classList.add("hidden");
 
-    document.getElementById("sheetDetail").textContent = detailText;
-    document.getElementById("sheetDetail").classList.remove("hidden");
-    document.getElementById("sheetInput").classList.add("hidden");
+    document.getElementById("sheetInput").value = nombre;
+    document.getElementById("sheetInput").type = "text";
+    document.getElementById("sheetLabel1").textContent = "Nombre";
+    document.getElementById("sheetInput2").value = monto.toFixed(2);
+    document.getElementById("sheetLabel2").textContent = "Monto (S/)";
+    _showFields(true);
     document.getElementById("sheetHint").classList.add("hidden");
-    document.getElementById("btnSheetConfirm").textContent = "✅ Sí, registrar";
+    document.getElementById("btnSheetConfirm").textContent = "✅ Registrar";
     document.getElementById("btnSheetConfirm").className = "btn-confirm";
     State.sheetMode = "confirm";
     openOverlay();
+    setTimeout(() => document.getElementById("sheetInput").focus(), 350);
 }
 
 // ── Corregir ──────────────────────────────────────────────────────────────────
 function onCorregir() {
     if (!State.selectedName) { showToast("Toca primero un nombre de la lista.", "error"); return; }
-    document.getElementById("sheetTitle").textContent = `✏️ Corregir monto de ${State.selectedName}`;
+    document.getElementById("sheetTitle").textContent = `✏️ Editar: ${State.selectedName}`;
     document.getElementById("sheetDetail").classList.add("hidden");
-    const inp = document.getElementById("sheetInput");
-    inp.value = "";
-    inp.type = "number";
-    inp.inputMode = "decimal";
-    inp.placeholder = "Nuevo monto (ej: 3.50)";
-    inp.classList.remove("hidden");
-    document.getElementById("sheetHint").textContent = "El monto anterior será reemplazado";
+
+    document.getElementById("sheetInput").value = State.selectedName;
+    document.getElementById("sheetInput").type = "text";
+    document.getElementById("sheetLabel1").textContent = "Nombre";
+    document.getElementById("sheetInput2").value = "";
+    document.getElementById("sheetInput2").placeholder = "Nuevo monto (ej: 3.50)";
+    document.getElementById("sheetLabel2").textContent = "Nuevo monto (S/)";
+    _showFields(true);
+    document.getElementById("sheetHint").textContent = "Cambia nombre y/o monto";
     document.getElementById("sheetHint").classList.remove("hidden");
-    document.getElementById("btnSheetConfirm").textContent = "Guardar";
+    document.getElementById("btnSheetConfirm").textContent = "Guardar cambios";
     document.getElementById("btnSheetConfirm").className = "btn-confirm";
-    State.sheetMode = "corregir";
+    State.sheetMode = "editar";
     openOverlay();
-    setTimeout(() => inp.focus(), 350);
+    setTimeout(() => document.getElementById("sheetInput2").focus(), 350);
 }
 
 // ── Borrar ────────────────────────────────────────────────────────────────────
 function onBorrar() {
     if (!State.selectedName) { showToast("Toca primero un nombre de la lista.", "error"); return; }
     document.getElementById("sheetTitle").textContent = `🗑️ Eliminar a ${State.selectedName}`;
-    document.getElementById("sheetDetail").textContent = `¿Seguro que quieres borrar\n el registro de hoy?`;
+    document.getElementById("sheetDetail").textContent = `¿Seguro que quieres borrar el registro de hoy?`;
     document.getElementById("sheetDetail").classList.remove("hidden");
-    document.getElementById("sheetInput").classList.add("hidden");
+    _showFields(false);
+    document.getElementById("sheetInputSingle").classList.add("hidden");
     document.getElementById("sheetHint").classList.add("hidden");
     document.getElementById("btnSheetConfirm").textContent = "Sí, eliminar";
     document.getElementById("btnSheetConfirm").className = "btn-confirm-red";
@@ -181,8 +186,9 @@ function openSheet(mode, { monto, nombre, callback }) {
     State.sheetMode = mode;
     State.askCallback = callback;
 
-    const inp = document.getElementById("sheetInput");
+    const inp = document.getElementById("sheetInputSingle");
     document.getElementById("sheetDetail").classList.add("hidden");
+    _showFields(false);
     inp.classList.remove("hidden");
     inp.value = "";
 
@@ -212,28 +218,34 @@ async function onSheetConfirm() {
     const mode = State.sheetMode;
 
     if (mode === "confirm") {
+        const nombre = document.getElementById("sheetInput").value.trim();
+        const montoRaw = parseFloat(document.getElementById("sheetInput2").value.replace(",", "."));
+        if (!nombre) { showToast("Escribe el nombre.", "warning"); return; }
+        if (isNaN(montoRaw) || montoRaw <= 0) { showToast("Monto inválido.", "warning"); return; }
         closeOverlay();
-        await doRegister(State.pendingNombre, State.pendingMonto);
+        await doRegister(nombre, montoRaw);
 
     } else if (mode === "ask-nombre") {
-        const val = document.getElementById("sheetInput").value.trim();
+        const val = document.getElementById("sheetInputSingle").value.trim();
         if (!val) { showToast("Escribe un nombre.", "warning"); return; }
         closeOverlay();
         State.askCallback(val);
 
     } else if (mode === "ask-monto") {
-        const val = parseFloat(document.getElementById("sheetInput").value.replace(",", "."));
+        const val = parseFloat(document.getElementById("sheetInputSingle").value.replace(",", "."));
         if (isNaN(val) || val <= 0) { showToast("Monto inválido.", "warning"); return; }
         closeOverlay();
         State.askCallback(val);
 
-    } else if (mode === "corregir") {
-        const val = parseFloat(document.getElementById("sheetInput").value.replace(",", "."));
-        if (isNaN(val) || val < 0) { showToast("Monto inválido.", "warning"); return; }
+    } else if (mode === "editar") {
+        const nombreNuevo = document.getElementById("sheetInput").value.trim();
+        const nuevoMonto = parseFloat(document.getElementById("sheetInput2").value.replace(",", "."));
+        if (!nombreNuevo) { showToast("Escribe el nombre.", "warning"); return; }
+        if (isNaN(nuevoMonto) || nuevoMonto < 0) { showToast("Monto inválido.", "warning"); return; }
         closeOverlay();
-        const result = await corregirMonto(State.selectedName, val);
+        const result = await editarEntrada(State.selectedName, nombreNuevo, nuevoMonto);
         if (!result.ok) { showToast(result.error, "error"); return; }
-        showToast(`✅ ${result.nombre}: S/ ${result.montoAnterior.toFixed(2)} → S/ ${result.nuevoMonto.toFixed(2)}`, "success");
+        showToast(`✅ ${result.nombreNuevo}: S/ ${result.nuevoMonto.toFixed(2)}`, "success");
         State.selectedName = null;
         updateActionBar();
         refreshTable();
