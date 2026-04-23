@@ -117,6 +117,18 @@ function processText(texto) {
     showConfirm(nombre, monto, montos);
 }
 
+// ── Helpers de UI ─────────────────────────────────────────────────────────────
+function _showFields(useDouble) {
+    const fields = document.getElementById("sheetFields");
+    const single = document.getElementById("sheetInputSingle");
+    if (useDouble) {
+        fields.classList.remove("hidden");
+        single.classList.add("hidden");
+    } else {
+        fields.classList.add("hidden");
+    }
+}
+
 // ── Confirmar registro ────────────────────────────────────────────────────────
 function showConfirm(nombre, monto, montos) {
     State.pendingNombre = nombre;
