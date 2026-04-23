@@ -7,7 +7,7 @@ import os
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify, send_file
 
-from config import DATE_FORMAT
+from config import EXCEL_PATH, DATE_FORMAT
 from entity_extractor import extraer_datos
 from excel_manager import (
     registrar_venta,
@@ -17,7 +17,7 @@ from excel_manager import (
     resumen_semanal,
     editar_entrada,
     generate_styled_export,
-    _ensure_db,
+    _ensure_workbook,
 )
 
 app = Flask(__name__)
@@ -142,7 +142,9 @@ def api_resumen_semanal():
 # ── API: Exportar Excel ─────────────────────────────
 @app.route("/api/exportar")
 def api_exportar():
-    _ensure_db()
+    _ensure_workbook()
+    if not EXCEL_PATH.exists():
+        return jsonify({"ok": False, "error": "No hay archivo Excel"}), 404
     buf = generate_styled_export()
     return send_file(
         buf,
@@ -153,6 +155,27 @@ def api_exportar():
 
 
 if __name__ == "__main__":
-    _ensure_db()
-    port = int(os.getenv("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    _ensure_workbook()
+    # 0.0.0.0 permite acceso desde otros dispositivos en la misma red
+    print("\n  ╔══════════════════════════════════════════════════╗")
+    print("  ║   🍽️  SISTEMA DE FIADO — LIZBETH                ║")
+    print("  ║                                                  ║")
+    print("  ║   Abre en tu teléfono:                           ║")
+
+    # Mostrar la IP local
+    import socket
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+    except Exception:
+        ip = "127.0.0.1"
+
+    url = f"http://{ip}:5000"
+    print(f"  ║   📱  {url:<39} ║")
+    print("  ║                                                  ║")
+    print("  ║   (PC y teléfono en el mismo WiFi)               ║")
+    print("  ╚══════════════════════════════════════════════════╝\n")
+
+    app.run(host="0.0.0.0", port=5000, debug=False)

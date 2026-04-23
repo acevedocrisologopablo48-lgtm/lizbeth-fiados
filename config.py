@@ -7,10 +7,7 @@ load_dotenv()
 # Ruta base del proyecto
 BASE_DIR = Path(__file__).parent
 
-# Base de datos SQLite  (en producción Railway usa la variable DB_PATH=/data/ventas.db)
-DB_PATH = os.getenv("DB_PATH", str(BASE_DIR / "ventas_fiado.db"))
-
-# Archivo Excel (legacy — ya no se usa para almacenar, solo compatibilidad)
+# Archivo Excel
 EXCEL_PATH = BASE_DIR / "ventas_fiado.xlsx"
 SHEET_NAME = "Registro"
 
